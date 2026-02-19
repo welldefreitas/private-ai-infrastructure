@@ -1,10 +1,10 @@
 <h1 align="center">🛡️ Enterprise Private AI Infrastructure</h1>
 
 <p align="center">
-  <img src="[https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)" alt="Docker">
-  <img src="[https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)" alt="Linux">
-  <img src="[https://img.shields.io/badge/NVIDIA-CUDA-76B900?style=for-the-badge&logo=nvidia&logoColor=white](https://img.shields.io/badge/NVIDIA-CUDA-76B900?style=for-the-badge&logo=nvidia&logoColor=white)" alt="Nvidia">
-  <img src="[https://img.shields.io/badge/Security-Zero_Trust-red?style=for-the-badge](https://img.shields.io/badge/Security-Zero_Trust-red?style=for-the-badge)" alt="Security">
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Linux" />
+  <img src="https://img.shields.io/badge/NVIDIA-76B900?style=for-the-badge&logo=nvidia&logoColor=white" alt="Nvidia" />
+  <img src="https://img.shields.io/badge/Security-Zero_Trust-red?style=for-the-badge" alt="Security" />
 </p>
 
 > **Secure, Air-gapped, and GPU-Accelerated Private LLM deployment using Docker and Linux.**
