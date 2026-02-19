@@ -1,67 +1,95 @@
-# 🛡️ Enterprise Private AI Infrastructure
+<h1 align="center">🛡️ Enterprise Private AI Infrastructure</h1>
 
-![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black) ![Security](https://img.shields.io/badge/Security-Zero_Trust-red?style=for-the-badge) ![Ollama](https://img.shields.io/badge/Ollama-Local_LLM-white?style=for-the-badge&logo=ollama&logoColor=black)
+<p align="center">
+  <img src="[https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)" alt="Docker">
+  <img src="[https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)" alt="Linux">
+  <img src="[https://img.shields.io/badge/NVIDIA-CUDA-76B900?style=for-the-badge&logo=nvidia&logoColor=white](https://img.shields.io/badge/NVIDIA-CUDA-76B900?style=for-the-badge&logo=nvidia&logoColor=white)" alt="Nvidia">
+  <img src="[https://img.shields.io/badge/Security-Zero_Trust-red?style=for-the-badge](https://img.shields.io/badge/Security-Zero_Trust-red?style=for-the-badge)" alt="Security">
+</p>
 
-> **Secure Private LLM deployment using Docker and Linux.**
+> **Secure, Air-gapped, and GPU-Accelerated Private LLM deployment using Docker and Linux.**
 
-This repository demonstrates the architecture for deploying Large Language Models (LLMs) in a private, air-gapped, and secure environment without relying on external APIs (like OpenAI or Anthropic).
+This repository provides a production-ready architecture for deploying Large Language Models (LLMs) locally. It eliminates the reliance on external APIs (such as OpenAI or Anthropic), ensuring absolute data sovereignty for enterprise environments.
 
-Designed for organizations that require:
-- 🔒 **Data privacy & Full control**
-- 🏢 **100% On-premise deployment**
-- 📜 **Compliance with GDPR / LGPD / HIPAA**
+Designed for organizations requiring strict adherence to **GDPR, LGPD, and HIPAA** compliance.
 
 ---
 
-## 🏗️ Architecture Overview
+## 🏗️ Architecture & Traffic Flow
 
-The infrastructure is built on a containerized, zero-trust model:
+The infrastructure is built on a containerized, zero-trust model. Traffic is securely routed through a reverse proxy, and the AI engine remains completely isolated from the public internet.
 
-[ Client Request ] 
-       │
-       ▼
-[ Nginx Reverse Proxy (SSL/TLS & Rate Limiting) ]
-       │
-       ▼
-[ Internal Docker Network (Isolated) ]
-       │
-       ▼
-[ LLM Runtime Engine (Ollama / vLLM) ]
-       │
-       ▼
-[ Local Models (Llama 3 / Mistral / DeepSeek) ]
+```mermaid
+graph TD
+    A[Client / Internal App] -->|HTTPS / Port 443| B(Nginx Reverse Proxy)
+    B -->|Rate Limited & Basic Auth| C{Docker Internal Network}
+    C -->|Port 11434| D[LLM Engine: Ollama / vLLM]
+    D -->|GPU Inference| E[(Local Weights: Llama 3 / Mistral)]
+    
+    classDef proxy fill:#2d3436,stroke:#00b894,stroke-width:2px,color:#fff;
+    classDef secure fill:#2d3436,stroke:#d63031,stroke-width:2px,color:#fff;
+    class B proxy
+    class C,D,E secure
+```
+---
+## 🛑 Core Security Principles
 
-🛑 Security Principles
-No External API Calls: 100% of the inference runs locally.
+- **Zero External API Calls:** 100% of the inference runs locally on the host server.
+- **No Data Retention:** Ephemeral prompt processing. Context is destroyed after the session.
+- **Complete Isolation:** The inference container has no outbound internet access.
+- **Edge Security:** Nginx acts as the gatekeeper, handling SSL/TLS termination and DDoS mitigation.
 
-Zero Data Logging: Ephemeral prompt processing. No data is stored or used for model training.
+---
 
-No Telemetry: Complete isolation from telemetry tracking.
+## 💻 Hardware Requirements
 
-Network Hardening: Docker instances communicate strictly via internal bridged networks.
+To achieve real-time inference latency, the following baseline is recommended:
+- **OS:** Ubuntu 22.04 LTS / Debian 12
+- **GPU:** NVIDIA RTX 3090 / 4090 or Enterprise A10G/A100 (Minimum 8GB vRAM for 7B parameters).
+- **Dependencies:** `docker`, `docker-compose`, and `nvidia-container-toolkit`.
 
-🚀 Deployment Example
-Basic demonstration of the core engine deployment (Requires NVIDIA Toolkit for GPU acceleration).
+---
+📂 Project Structure
+```
+ private-ai-infrastructure/
+├── docker-compose.yml       # Infrastructure orchestration
+├── nginx/
+│   ├── nginx.conf           # Proxy, Rate Limits, and Security Headers
+│   └── certs/               # SSL Certificates (Volume)
+├── scripts/
+│   └── pull-models.sh       # Automated script to download weights safely
+└── README.md
+```
 
-1. Install Docker & Dependencies:
+---
 
-Bash
-sudo apt update && sudo apt install docker.io -y
-2. Deploy the LLM Runtime (Ollama):
+🚀 Deployment Guide
+1. Clone the repository and navigate to the directory:
+```
+git clone https://github.com/welldefreitas/private-ai-infrastructure.git
+cd private-ai-infrastructure
+```
+2. Initialize the secure Docker environment:
+```
+docker-compose up -d --build
+```
+3. Pull the required model weights (e.g., Mistral 7B) into the secure volume:
+```
+docker exec -it private_llm_engine ollama run mistral
+```
+---
 
-Bash
-curl -fsSL [https://ollama.com/install.sh](https://ollama.com/install.sh) | sh
-3. Run a Private Model (e.g., Mistral):
+⚡ API Usage & Testing
+Once deployed, the infrastructure acts as a drop-in replacement for OpenAI's API. You can test the local inference engine using curl:
+```
+curl -X POST https://your-secure-server.com/api/generate -d '{
+  "model": "mistral",
+  "prompt": "Explain the importance of zero-trust architecture in 3 bullet points.",
+  "stream": false
+}'
+```
+---
 
-Bash
-ollama run mistral
-
-🏢 Enterprise Use Cases
-Legal AI: Analyzing contracts and confidential lawsuits.
-
-Healthcare AI: Processing patient records without violating HIPAA.
-
-Corporate Chat Systems: Internal knowledge bases for HR and Engineering.
-
-Author: Wellington de Freitas | AI Security Specialist & Cloud Architect
-
+<p align="center">
+<b>Author:</b> <a href="https://github.com/welldefreitas">Wellington de Freitas</a> | <i>AI Security Specialist & Cloud Architect</i>
+</p>
