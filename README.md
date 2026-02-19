@@ -9,9 +9,15 @@
 
 > **Secure, Air-gapped, and GPU-Accelerated Private LLM deployment using Docker and Linux.**
 
-This repository provides a production-ready architecture for deploying Large Language Models (LLMs) locally. It eliminates the reliance on external APIs (such as OpenAI or Anthropic), ensuring absolute data sovereignty for enterprise environments.
+This repository provides a production-ready architecture for deploying Large Language Models (LLMs) locally. It eliminates the reliance on external APIs (such as OpenAI or Anthropic), ensuring absolute data sovereignty for enterprise environments. Designed for **GDPR, LGPD, and HIPAA** compliance.
 
-Designed for organizations requiring strict adherence to **GDPR, LGPD, and HIPAA** compliance.
+---
+
+## 🌍 Real-World Use Cases
+This architecture is actively designed for enterprise clients requiring:
+- **Legal & Compliance:** Processing confidential lawsuits and contracts without data leaks.
+- **Healthcare Data:** Analyzing patient records safely in an air-gapped environment.
+- **Corporate Knowledge:** Internal HR/Engineering chat systems with zero-trust policies.
 
 ---
 
@@ -32,13 +38,12 @@ graph TD
     class C,D,E secure
 ```
 ---
-## 🛑 Core Security Principles
+## ⚙️ Core Components & Security Principles
 
+- **Reverse Proxy (Nginx):** Edge security, SSL/TLS termination, and DDoS mitigation.
+- **Container Orchestration (Docker):** Full isolation. Inference container has no outbound internet access.
 - **Zero External API Calls:** 100% of the inference runs locally on the host server.
 - **No Data Retention:** Ephemeral prompt processing. Context is destroyed after the session.
-- **Complete Isolation:** The inference container has no outbound internet access.
-- **Edge Security:** Nginx acts as the gatekeeper, handling SSL/TLS termination and DDoS mitigation.
-
 ---
 
 ## 💻 Hardware Requirements
@@ -79,12 +84,11 @@ docker exec -it private_llm_engine ollama run mistral
 ```
 ---
 
-⚡ API Usage & Testing
-Once deployed, the infrastructure acts as a drop-in replacement for OpenAI's API. You can test the local inference engine using curl:
+⚡ 3. API Usage (Drop-in replacement for OpenAI):
 ```
-curl -X POST https://your-secure-server.com/api/generate -d '{
+curl -X POST https://localhost/api/generate -d '{
   "model": "mistral",
-  "prompt": "Explain the importance of zero-trust architecture in 3 bullet points.",
+  "prompt": "Explain zero-trust architecture.",
   "stream": false
 }'
 ```
