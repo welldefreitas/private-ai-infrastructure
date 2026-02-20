@@ -1,17 +1,24 @@
 <h1 align="center">🛡️ Enterprise Private AI Infrastructure</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
-  <img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Linux" />
-  <img src="https://img.shields.io/badge/NVIDIA-76B900?style=for-the-badge&logo=nvidia&logoColor=white" alt="Nvidia" />
-  <img src="https://img.shields.io/badge/Security-Zero_Trust-red?style=for-the-badge" alt="Security" />
+  <img src="https://img.shields.io/github/actions/workflow/status/welldefreitas/private-ai-infrastructure/ci.yml?style=for-the-badge&logo=githubactions" alt="CI Status">
+  <img src="https://img.shields.io/badge/Docker-Production-blue?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
+  <img src="https://img.shields.io/badge/Security-Hardened-green?style=for-the-badge" alt="Security">
 </p>
 
 > **Secure, egress-restricted, and GPU-Accelerated Private LLM deployment using Docker and Linux.**
 
 This repository provides a production-ready architecture for deploying Large Language Models (LLMs) locally. It eliminates the reliance on external APIs (such as OpenAI or Anthropic), ensuring absolute data sovereignty for enterprise environments. 
 
-**Designed to support GDPR, LGPD, and HIPAA compliance controls.**
+---
+
+## 🏛️ Compliance & Governance Alignment
+This architecture is explicitly designed to support the following regulatory frameworks and standards:
+- **GDPR / LGPD / HIPAA** (Zero data retention and full data sovereignty).
+- **OWASP LLM Top 10** (Mitigation of prompt injection and DoS via rate limiting).
+- **Zero Trust Architecture** (Egress-blocked containers and strict proxy gating).
+
+> **⚠️ Production Note:** This project uses self-signed SSL certificates for local/development demonstration purposes. For production deployments, these must be replaced with Corporate PKI or Let's Encrypt certificates.
 
 ---
 
@@ -20,7 +27,6 @@ This architecture is actively designed for enterprise clients requiring:
 - **Legal & Compliance:** Processing confidential lawsuits and contracts without data leaks.
 - **Healthcare Data:** Analyzing patient records safely in a network-restricted environment.
 - **Corporate Knowledge:** Internal HR/Engineering chat systems with zero-trust policies.
-
 ---
 
 ## 🏗️ Architecture & Traffic Flow
