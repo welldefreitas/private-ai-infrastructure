@@ -67,8 +67,9 @@ To achieve real-time inference latency, the following baseline is recommended:
 ---
 📂 Project Structure
 ```
- private-ai-infrastructure/
+private-ai-infrastructure/
 ├── docker-compose.yml       # Infrastructure orchestration
+├── Makefile                 # Automation commands
 ├── nginx/
 │   ├── nginx.conf           # Proxy, Rate Limits, and Security Headers
 │   └── certs/               # SSL Certificates (Volume)
