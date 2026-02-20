@@ -1,14 +1,16 @@
 SHELL := /bin/bash
 
-.PHONY: help up down logs ps lint scan trivy compose-validate
+.PHONY: help up down logs status certs pull-models lint scan trivy ci-smoke
 
 help:
 	@echo "Targets:"
 	@echo "  up               - Start stack (Docker Compose)"
 	@echo "  down             - Stop stack and remove volumes"
 	@echo "  logs             - Follow logs"
-	@echo "  ps               - Show containers"
-	@echo "  compose-validate - Validate compose config"
+	@echo "  status           - Show containers"
+	@echo "  certs            - Generate local TLS certs (dev/test)"
+	@echo "  pull-models      - Download LLM weights into the Docker volume"
+	@echo "  ci-smoke         - Validate CI compose config"
 	@echo "  lint             - Run local lint checks (yamllint + shellcheck)"
 	@echo "  trivy            - Run security scan (Trivy container)"
 	@echo "  scan             - Alias for trivy"
@@ -22,11 +24,17 @@ down:
 logs:
 	docker compose logs -f --tail=200
 
-ps:
+status:
 	docker compose ps
 
-compose-validate:
-	docker compose config -q
+certs:
+	bash scripts/generate-certs.sh
+
+pull-models:
+	bash scripts/pull-models.sh
+
+ci-smoke:
+	docker compose -f docker-compose.ci.yml config -q
 
 lint:
 	yamllint -d "{extends: relaxed, rules: {line-length: {max: 140}}}" .
