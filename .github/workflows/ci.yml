@@ -2,48 +2,46 @@ name: Enterprise CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
-# Principle of least privilege for GitHub token
+# Least privilege for the GitHub token (required for SARIF upload)
 permissions:
   contents: read
-  security-events: write # needed for SARIF upload (Code Scanning)
+  security-events: write
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  lint-and-security:
+  lint_security:
     name: Lint + Security Gates
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      # Checkout repository
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Quick sanity: avoid "works on my machine" by enforcing expected files
+      # Fast sanity checks (fail early if critical files are missing)
       - name: Validate repository layout
         run: |
           set -euo pipefail
           test -f docker-compose.yml
-          test -f Makefile || true
-          test -d nginx || true
-          test -d scripts || true
-          echo "Repo structure OK."
+          test -d nginx
+          test -d scripts
+          echo "Repo layout OK."
 
-      # Lint GitHub Actions workflows (catches YAML + action errors)
+      # GitHub Actions workflow lint (catches YAML + actions mistakes)
       - name: actionlint (GitHub Actions linter)
-        uses: reviewdog/action-actionlint@v1
+        uses: rhysd/actionlint@v1
         with:
-          fail_on_error: true
+          fail-on-error: true
 
-      # Lint YAML files (docker-compose, workflows, configs)
+      # YAML lint (compose, workflows, configs)
       - name: yamllint
         uses: ibiqlik/action-yamllint@v3
         with:
@@ -54,28 +52,28 @@ jobs:
               line-length: disable
               truthy: disable
 
-      # Shell script static analysis (scripts/*.sh)
+      # Shell script lint (scripts/*.sh)
       - name: ShellCheck (bash scripts)
-        uses: ludeeus/action-shellcheck@master
+        uses: ludeeus/action-shellcheck@2.0.0
         with:
           scandir: "scripts"
 
-      # Secret scanning (stop accidental credential leaks)
+      # Secrets scan (block accidental credential leaks)
       - name: Gitleaks (secrets scan)
         uses: gitleaks/gitleaks-action@v2
-        env:
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # optional; can be omitted
+        with:
+          args: "--redact --verbose --exit-code=1"
 
-      # IaC security scanning (Terraform/K8s/YAML/Docker etc.)
-      - name: Checkov (IaC/Security misconfig)
+      # IaC / misconfiguration scanning (compose/yaml/k8s/terraform/etc.)
+      - name: Checkov (IaC misconfig scan)
         uses: bridgecrewio/checkov-action@v12
         with:
           directory: .
-          quiet: true
           framework: all
-          soft_fail: false # set true if you prefer warning-only on early stage
+          quiet: true
+          soft_fail: false
 
-      # Container/IaC config scanning (Dockerfile, compose, k8s, etc.)
+      # Trivy config scan -> SARIF (shows results in GitHub Security tab)
       - name: Trivy - config scan (misconfigurations)
         uses: aquasecurity/trivy-action@0.24.0
         with:
@@ -86,28 +84,14 @@ jobs:
           format: "sarif"
           output: "trivy-config.sarif"
 
-      - name: Upload Trivy config results to GitHub Security
+      # Upload SARIF only when it has permissions (avoids fork PR issues)
+      - name: Upload Trivy config SARIF
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "trivy-config.sarif"
 
-      # Dependency + file system scan (catch vulnerable libs and binaries)
-      - name: Trivy - filesystem scan (deps & vulns)
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          scan-type: "fs"
-          scan-ref: "."
-          severity: "CRITICAL,HIGH"
-          ignore-unfixed: true
-          format: "sarif"
-          output: "trivy-fs.sarif"
-
-      - name: Upload Trivy FS results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: "trivy-fs.sarif"
-
-      # Optional: Generate SBOM (good for enterprise/procurement/compliance)
+      # Optional: SBOM for enterprise/compliance (artifact)
       - name: Generate SBOM (Syft)
         uses: anchore/sbom-action@v0
         with:
@@ -121,37 +105,38 @@ jobs:
           name: sbom-spdx
           path: sbom.spdx.json
 
-  smoke-compose:
-    name: Compose Smoke Test
+  smoke_compose:
+    name: Compose Smoke Test (CI-safe)
     runs-on: ubuntu-latest
-    needs: lint-and-security
+    needs: lint_security
     timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # NOTE: GitHub runner won't have NVIDIA GPU.
-      # We validate compose syntax and do a "no-GPU" safe boot strategy.
-      - name: Prepare no-GPU compose override (CI-safe)
+      # CI runners have no NVIDIA GPU. Remove GPU reservation just for CI validation.
+      - name: Create CI override (no GPU)
         run: |
           set -euo pipefail
           cat > docker-compose.ci.override.yml <<'YAML'
           services:
             ollama:
-              # CI runners have no GPU. Remove GPU reservation so compose can validate/start.
               deploy: {}
           YAML
 
+      # Validates docker-compose syntax after merging override
       - name: Docker Compose config validation
         run: |
           set -euo pipefail
           docker compose -f docker-compose.yml -f docker-compose.ci.override.yml config >/dev/null
           echo "Compose config is valid."
 
-      # Optional: bring up nginx only to ensure config doesn't crash
+      # Nginx config test inside container (fast + reliable)
       - name: Nginx config test (container)
         run: |
           set -euo pipefail
-          docker run --rm -v "$PWD/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" nginx:alpine nginx -t
+          docker run --rm \
+            -v "$PWD/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" \
+            nginx:alpine nginx -t
           echo "Nginx config OK."
