@@ -1,105 +1,65 @@
- [![Enterprise CI/CD Pipeline](https://github.com/welldefreitas/private-ai-infrastructure/actions/workflows/ci.yml/badge.svg)](https://github.com/welldefreitas/private-ai-infrastructure/actions/workflows/ci.yml)
+<div align="center">
 
-<h1 align="center">🛡️ Enterprise Private AI Infrastructure</h1> 
+# 🛡️ Enterprise Private AI Infrastructure
+### Secure, hardened, and GPU-accelerated **on-prem LLM** deployment with Docker + Nginx (TLS)
+
+[![Enterprise CI/CD Pipeline](https://github.com/welldefreitas/private-ai-infrastructure/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/welldefreitas/private-ai-infrastructure/actions/workflows/ci.yml)
+![Docker](https://img.shields.io/badge/Docker-ready-0db7ed?style=flat&logo=docker&logoColor=white)
+![Security](https://img.shields.io/badge/Security-hardened-22c55e?style=flat)
+![LLM](https://img.shields.io/badge/LLM-Ollama-111827?style=flat)
+![Linux](https://img.shields.io/badge/Linux-production-111827?style=flat&logo=linux&logoColor=white)
+
+**Goal:** run an enterprise-grade LLM **locally** (no public APIs) behind a **secure reverse proxy** with TLS, rate limiting, and CI security gates.
+
+</div>
+
+---
+
+## ✅ What this repository delivers
+
+- **Private LLM Engine (Ollama)** running inside an isolated Docker network (not exposed to the host)
+- **Secure Nginx reverse proxy** with:
+  - TLS (certs mounted via volume)
+  - Rate limiting (basic anti-abuse / anti-DDoS)
+  - Security headers
+- **Automation scripts**:
+  - Generate TLS certificates
+  - Pull and store model weights locally (offline-ready)
+- **Makefile** with “one-command” workflows
+- **Security threat model** (`security.md`)
+- **Enterprise CI**: yamllint + shellcheck + actionlint + trivy + compose smoke test
+
+---
+
+## 🧱 Architecture
+
+> Rendered diagram:
 
 <p align="center">
-  <img src="https://img.shields.io/github/actions/workflow/status/welldefreitas/private-ai-infrastructure/ci.yml?style=for-the-badge&logo=githubactions" alt="CI Status">
-  <img src="https://img.shields.io/badge/Docker-Production-blue?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
-  <img src="https://img.shields.io/badge/Security-Hardened-green?style=for-the-badge" alt="Security">
+  <img src="diagrams/architecture.png" alt="Architecture" width="900" />
 </p>
 
-![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker&logoColor=white)
-![Security](https://img.shields.io/badge/Security-Hardened-success)
-![Proxy](https://img.shields.io/badge/Nginx-Reverse%20Proxy-brightgreen?logo=nginx&logoColor=white)
-![Zero%20Egress](https://img.shields.io/badge/Egress-Restricted-informational)
-
-> **Secure, egress-restricted, and GPU-Accelerated Private LLM deployment using Docker and Linux.**
-
-This repository provides a production-ready architecture for deploying Large Language Models (LLMs) locally. It eliminates the reliance on external APIs (such as OpenAI or Anthropic), ensuring absolute data sovereignty for enterprise environments. 
+> Source diagram (Mermaid):
+- `diagrams/architecture.mmd`
 
 ---
 
-## 🏛️ Compliance & Governance Alignment
-This architecture is explicitly designed to support the following regulatory frameworks and standards:
-- **GDPR / LGPD / HIPAA** (Zero data retention and full data sovereignty).
-- **OWASP LLM Top 10** (Mitigation of prompt injection and DoS via rate limiting).
-- **Zero Trust Architecture** (Egress-blocked containers and strict proxy gating).
+## 📦 Project structure
 
-> **⚠️ Production Note:** This project uses self-signed SSL certificates for local/development demonstration purposes. For production deployments, these must be replaced with Corporate PKI or Let's Encrypt certificates.
-
----
-
-## 🌍 Real-World Use Cases
-This architecture is actively designed for enterprise clients requiring:
-- **Legal & Compliance:** Processing confidential lawsuits and contracts without data leaks.
-- **Healthcare Data:** Analyzing patient records safely in a network-restricted environment.
-- **Corporate Knowledge:** Internal HR/Engineering chat systems with zero-trust policies.
----
-
-## 🏗️ Architecture & Traffic Flow
-
-The infrastructure is built on a containerized, zero-trust model. Traffic is securely routed through a reverse proxy, and the AI engine remains completely isolated from the public internet.
-
-```mermaid
-graph TD
-    A[Client / Internal App] -->|HTTPS / Port 443| B(Nginx Reverse Proxy)
-    B -->|Rate Limited & Basic Auth| C{Docker Internal Network}
-    C -->|Port 11434| D[LLM Engine: Ollama / vLLM]
-    D -->|GPU Inference| E[(Local Weights: Llama 3 / Mistral)]
-    
-    classDef proxy fill:#2d3436,stroke:#00b894,stroke-width:2px,color:#fff;
-    classDef secure fill:#2d3436,stroke:#d63031,stroke-width:2px,color:#fff;
-    class B proxy
-    class C,D,E secure
-```
----
-## 🛑 Threat Model & Security Controls
-
-| Threat Vector | Mitigating Control |
-| :--- | :--- |
-| **Data Exfiltration** | Docker network set to `internal: true` (Total egress block). |
-| **DDoS / Rate Abuse** | Nginx `limit_req_zone` applied at the edge. |
-| **Prompt Leakage** | Nginx `access_log` completely disabled. Ephemeral container memory. |
-| **Unauthorized Access** | Nginx configured for Basic Auth / Allowlist capabilities. |
-
----
-
-## ⚙️ Core Components & Principles
-- **Reverse Proxy (Nginx):** Edge security, SSL/TLS termination, and DDoS mitigation.
-- **Container Orchestration:** Full isolation. Inference container has absolutely **no outbound internet access**.
-- **Zero External API Calls:** 100% of the inference runs locally on the host server.
-
----
-
-## 💻 Hardware Requirements
-To achieve real-time inference latency, the following baseline is recommended:
-- **OS:** Ubuntu 22.04 LTS / Debian 12
-- **GPU:** NVIDIA RTX 3090 / 4090 or Enterprise A10G/A100 (Minimum 8GB vRAM for 7B parameters).
-- **Dependencies:** `docker`, `docker-compose`, and `nvidia-container-toolkit`.
-
----
-📂 Project Structure
-```
+```text
 private-ai-infrastructure/
-├── .github/
-│   └── workflows/
-│       └── ci.yml               # Enterprise CI/CD Security & Linting pipeline
-├── diagrams/
-│   ├── architecture.mmd         # Mermaid architecture diagram source
-│   └── architecture.png         # Exported architecture visualization
-├── nginx/
-│   ├── nginx.conf               # Proxy, Rate Limits, and HTTPS configuration
-│   └── certs/                   # SSL Certificates (Volume)
-├── scripts/
-│   ├── generate-certs.sh        # Automated SSL certificate generation
-│   └── pull-models.sh           # Automated script to download weights safely
-├── .env.example                 # Environment configuration template
-├── CHANGELOG.md                 # Version history and release notes
-├── docker-compose.yml           # Infrastructure orchestration
-├── LICENSE                      # Open-source MIT License
-├── Makefile                     # Automation commands
-├── README.md                    # Main project documentation
-└── security.md                  # Threat model and security mitigations
+├── .github/workflows/ci.yml          # CI: lint + security gates + compose smoke test
+├── diagrams/                         # Architecture diagram (Mermaid + PNG export)
+├── nginx/nginx.conf                  # Reverse proxy with TLS + rate limiting + headers
+├── nginx/certs/                      # Certificates volume (placeholder tracked via .keep)
+├── scripts/generate-certs.sh         # Local cert generation (dev/test)
+├── scripts/pull-models.sh            # Pull weights into local volume (offline-ready)
+├── docker-compose.yml                # Production-like compose
+├── docker-compose.ci.yml             # CI-safe compose
+├── .env.example                      # Environment template
+├── Makefile                          # One-liners: up/down/logs/lint/scan/smoke
+├── security.md                       # Threats + mitigations (security posture)
+└── CHANGELOG.md                      # Release notes
 ```
 
 ---
