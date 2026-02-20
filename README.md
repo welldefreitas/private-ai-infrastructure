@@ -72,15 +72,19 @@ private-ai-infrastructure/
 │   └── workflows/
 │       └── ci.yml               # Enterprise CI/CD Security & Linting pipeline
 ├── diagrams/
-│   └── architecture.mmd         # Mermaid architecture diagram source
-├── docker-compose.yml           # Infrastructure orchestration
-├── Makefile                     # Automation commands
+│   ├── architecture.mmd         # Mermaid architecture diagram source
+│   └── architecture.png         # Exported architecture visualization
 ├── nginx/
 │   ├── nginx.conf               # Proxy, Rate Limits, and HTTPS configuration
 │   └── certs/                   # SSL Certificates (Volume)
 ├── scripts/
 │   ├── generate-certs.sh        # Automated SSL certificate generation
 │   └── pull-models.sh           # Automated script to download weights safely
+├── .env.example                 # Environment configuration template
+├── CHANGELOG.md                 # Version history and release notes
+├── docker-compose.yml           # Infrastructure orchestration
+├── LICENSE                      # Open-source MIT License
+├── Makefile                     # Automation commands
 ├── README.md                    # Main project documentation
 └── security.md                  # Threat model and security mitigations
 ```
