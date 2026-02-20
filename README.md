@@ -154,6 +154,12 @@ private-ai-infrastructure/
 
 ## 🚀 Quick start (local)
 
+**0) Clone the repository**
+```bash
+git clone https://github.com/welldefreitas/private-ai-infrastructure.git
+cd private-ai-infrastructure
+```
+
 **1) Requirements**
 - Docker + Docker Compose v2
 - Linux/macOS recommended
