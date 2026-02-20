@@ -1,10 +1,17 @@
-<h1 align="center">🛡️ Enterprise Private AI Infrastructure</h1>
+ [![Enterprise CI/CD Pipeline](https://github.com/welldefreitas/private-ai-infrastructure/actions/workflows/ci.yml/badge.svg)](https://github.com/welldefreitas/private-ai-infrastructure/actions/workflows/ci.yml)
+
+<h1 align="center">🛡️ Enterprise Private AI Infrastructure</h1> 
 
 <p align="center">
   <img src="https://img.shields.io/github/actions/workflow/status/welldefreitas/private-ai-infrastructure/ci.yml?style=for-the-badge&logo=githubactions" alt="CI Status">
   <img src="https://img.shields.io/badge/Docker-Production-blue?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
   <img src="https://img.shields.io/badge/Security-Hardened-green?style=for-the-badge" alt="Security">
 </p>
+
+![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker&logoColor=white)
+![Security](https://img.shields.io/badge/Security-Hardened-success)
+![Proxy](https://img.shields.io/badge/Nginx-Reverse%20Proxy-brightgreen?logo=nginx&logoColor=white)
+![Zero%20Egress](https://img.shields.io/badge/Egress-Restricted-informational)
 
 > **Secure, egress-restricted, and GPU-Accelerated Private LLM deployment using Docker and Linux.**
 
