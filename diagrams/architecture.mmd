@@ -1,0 +1,12 @@
+flowchart LR
+  U[User / Client] -->|HTTPS 443| N[Nginx Reverse Proxy]
+  N -->|internal network| O[Ollama LLM Engine :11434]
+  O --> V[(ollama_data volume)]
+  N --> C[(certs volume)]
+
+  subgraph Docker Host
+    N
+    O
+    V
+    C
+  end
