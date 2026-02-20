@@ -1,8 +1,11 @@
 # Enterprise Private AI - Management Commands
 
-.PHONY: up down logs pull-models test-api
+.PHONY: certs up down logs pull-models test-api
 
-up:
+certs:
+	@bash scripts/generate-certs.sh
+
+up: certs
 	@echo "[*] Starting Secure AI Infrastructure..."
 	docker-compose up -d --build
 
@@ -18,5 +21,5 @@ pull-models:
 	bash scripts/pull-models.sh
 
 test-api:
-	@echo "[*] Testing Private Endpoint..."
-	curl -X POST http://localhost/api/generate -d '{"model": "mistral", "prompt": "Status check", "stream": false}'
+	@echo "[*] Testing Private HTTPS Endpoint..."
+	curl -k -X POST https://localhost/api/generate -d '{"model": "mistral", "prompt": "Status check", "stream": false}'
