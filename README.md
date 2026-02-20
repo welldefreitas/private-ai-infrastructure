@@ -70,16 +70,19 @@ To achieve real-time inference latency, the following baseline is recommended:
 private-ai-infrastructure/
 ├── .github/
 │   └── workflows/
-│       └── security.yml     # CI/CD Security & Linting pipeline
-├── docker-compose.yml       # Infrastructure orchestration
-├── Makefile                 # Automation commands
+│       └── ci.yml               # Enterprise CI/CD Security & Linting pipeline
+├── diagrams/
+│   └── architecture.mmd         # Mermaid architecture diagram source
+├── docker-compose.yml           # Infrastructure orchestration
+├── Makefile                     # Automation commands
 ├── nginx/
-│   ├── nginx.conf           # Proxy, Rate Limits, and Security Headers
-│   └── certs/               # SSL Certificates (Volume)
+│   ├── nginx.conf               # Proxy, Rate Limits, and HTTPS configuration
+│   └── certs/                   # SSL Certificates (Volume)
 ├── scripts/
-│   ├── generate-certs.sh    # Automated SSL certificate generation
-│   └── pull-models.sh       # Automated script to download weights safely
-└── README.md
+│   ├── generate-certs.sh        # Automated SSL certificate generation
+│   └── pull-models.sh           # Automated script to download weights safely
+├── README.md                    # Main project documentation
+└── security.md                  # Threat model and security mitigations
 ```
 
 ---
