@@ -5,7 +5,7 @@ services:
     image: ollama/ollama:latest
     container_name: private_llm_engine
     restart: unless-stopped
-    # No exposed ports to the host -> 100% isolated. Nginx handles external access.
+    # 100% isolated. No egress (outbound) internet access due to internal network.
     volumes:
       - ollama_data:/root/.ollama
     networks:
@@ -30,11 +30,14 @@ services:
       - ./nginx/certs:/etc/nginx/certs:ro
     networks:
       - ai_secure_net
+      - public_proxy_net # Nginx connects to both the world and the isolated AI
     depends_on:
       - ollama
 
 networks:
   ai_secure_net:
+    internal: true 
+  public_proxy_net:
     driver: bridge
 
 volumes:
