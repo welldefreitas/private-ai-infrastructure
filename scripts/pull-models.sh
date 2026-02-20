@@ -11,7 +11,8 @@ MODELS=("mistral" "llama3")
 
 for MODEL in "${MODELS[@]}"; do
     echo "[+] Pulling model: $MODEL..."
-    docker exec -it private_llm_engine ollama pull $MODEL
+    # The variable is now safely enclosed in double quotes
+    docker exec -it private_llm_engine ollama pull "$MODEL"
 done
 
 echo "[✓] All models downloaded successfully and secured in the local volume."
