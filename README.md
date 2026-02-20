@@ -7,16 +7,18 @@
   <img src="https://img.shields.io/badge/Security-Zero_Trust-red?style=for-the-badge" alt="Security" />
 </p>
 
-> **Secure, Air-gapped, and GPU-Accelerated Private LLM deployment using Docker and Linux.**
+> **Secure, egress-restricted, and GPU-Accelerated Private LLM deployment using Docker and Linux.**
 
-This repository provides a production-ready architecture for deploying Large Language Models (LLMs) locally. It eliminates the reliance on external APIs (such as OpenAI or Anthropic), ensuring absolute data sovereignty for enterprise environments. Designed for **GDPR, LGPD, and HIPAA** compliance.
+This repository provides a production-ready architecture for deploying Large Language Models (LLMs) locally. It eliminates the reliance on external APIs (such as OpenAI or Anthropic), ensuring absolute data sovereignty for enterprise environments. 
+
+**Designed to support GDPR, LGPD, and HIPAA compliance controls.**
 
 ---
 
 ## 🌍 Real-World Use Cases
 This architecture is actively designed for enterprise clients requiring:
 - **Legal & Compliance:** Processing confidential lawsuits and contracts without data leaks.
-- **Healthcare Data:** Analyzing patient records safely in an air-gapped environment.
+- **Healthcare Data:** Analyzing patient records safely in a network-restricted environment.
 - **Corporate Knowledge:** Internal HR/Engineering chat systems with zero-trust policies.
 
 ---
@@ -38,16 +40,25 @@ graph TD
     class C,D,E secure
 ```
 ---
-## ⚙️ Core Components & Security Principles
+## 🛑 Threat Model & Security Controls
 
+| Threat Vector | Mitigating Control |
+| :--- | :--- |
+| **Data Exfiltration** | Docker network set to `internal: true` (Total egress block). |
+| **DDoS / Rate Abuse** | Nginx `limit_req_zone` applied at the edge. |
+| **Prompt Leakage** | Nginx `access_log` completely disabled. Ephemeral container memory. |
+| **Unauthorized Access** | Nginx configured for Basic Auth / Allowlist capabilities. |
+
+---
+
+## ⚙️ Core Components & Principles
 - **Reverse Proxy (Nginx):** Edge security, SSL/TLS termination, and DDoS mitigation.
-- **Container Orchestration (Docker):** Full isolation. Inference container has no outbound internet access.
+- **Container Orchestration:** Full isolation. Inference container has absolutely **no outbound internet access**.
 - **Zero External API Calls:** 100% of the inference runs locally on the host server.
-- **No Data Retention:** Ephemeral prompt processing. Context is destroyed after the session.
+
 ---
 
 ## 💻 Hardware Requirements
-
 To achieve real-time inference latency, the following baseline is recommended:
 - **OS:** Ubuntu 22.04 LTS / Debian 12
 - **GPU:** NVIDIA RTX 3090 / 4090 or Enterprise A10G/A100 (Minimum 8GB vRAM for 7B parameters).
