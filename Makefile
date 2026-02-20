@@ -1,34 +1,42 @@
-# Enterprise Private AI - Management Commands
+SHELL := /bin/bash
 
-.PHONY: certs up down logs pull-models test-api test-nginx lint
+.PHONY: help up down logs ps lint scan trivy compose-validate
 
-certs:
-	@bash scripts/generate-certs.sh
+help:
+	@echo "Targets:"
+	@echo "  up               - Start stack (Docker Compose)"
+	@echo "  down             - Stop stack and remove volumes"
+	@echo "  logs             - Follow logs"
+	@echo "  ps               - Show containers"
+	@echo "  compose-validate - Validate compose config"
+	@echo "  lint             - Run local lint checks (yamllint + shellcheck)"
+	@echo "  trivy            - Run security scan (Trivy container)"
+	@echo "  scan             - Alias for trivy"
 
-up: certs
-	@echo "[*] Starting Secure AI Infrastructure..."
-	docker-compose up -d --build
+up:
+	docker compose up -d
 
 down:
-	@echo "[*] Shutting down and cleaning up..."
-	docker-compose down
+	docker compose down -v
 
 logs:
-	docker-compose logs -f nginx
+	docker compose logs -f --tail=200
 
-pull-models:
-	@echo "[*] Pulling default models securely..."
-	bash scripts/pull-models.sh
+ps:
+	docker compose ps
 
-test-nginx:
-	@echo "[*] Validating Nginx configuration..."
-	docker-compose exec nginx nginx -t
-
-test-api:
-	@echo "[*] Testing Private HTTPS Endpoint..."
-	curl -k -X POST https://localhost/api/generate -d '{"model": "mistral", "prompt": "Status check", "stream": false}'
+compose-validate:
+	docker compose config -q
 
 lint:
-	@echo "[*] Running local YamlLint and ShellCheck..."
-	docker run --rm -v $(PWD):/data cytopia/yamllint .
+	yamllint -d "{extends: relaxed, rules: {line-length: {max: 140}}}" .
 	shellcheck scripts/*.sh
+
+trivy:
+	docker run --rm -v "$$PWD:/repo" aquasec/trivy:latest fs \
+	  --security-checks vuln,config,secret \
+	  --severity HIGH,CRITICAL \
+	  --exit-code 1 \
+	  /repo
+
+scan: trivy
