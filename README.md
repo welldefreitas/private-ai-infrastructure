@@ -68,12 +68,16 @@ To achieve real-time inference latency, the following baseline is recommended:
 📂 Project Structure
 ```
 private-ai-infrastructure/
+├── .github/
+│   └── workflows/
+│       └── security.yml     # CI/CD Security & Linting pipeline
 ├── docker-compose.yml       # Infrastructure orchestration
 ├── Makefile                 # Automation commands
 ├── nginx/
 │   ├── nginx.conf           # Proxy, Rate Limits, and Security Headers
 │   └── certs/               # SSL Certificates (Volume)
 ├── scripts/
+│   ├── generate-certs.sh    # Automated SSL certificate generation
 │   └── pull-models.sh       # Automated script to download weights safely
 └── README.md
 ```
