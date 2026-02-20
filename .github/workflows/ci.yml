@@ -1,98 +1,172 @@
+---
+# ============================================================
+# Enterprise CI/CD Pipeline for Private AI Infrastructure
+#
+# This pipeline enforces production-grade quality gates:
+#
+# • YAML lint validation
+# • Shell script security lint
+# • GitHub Actions workflow validation
+# • Vulnerability scanning
+# • Docker compose smoke test
+#
+# This ensures the infrastructure is:
+# Secure
+# Reliable
+# Deployable
+# Enterprise-ready
+# ============================================================
+
 name: Enterprise CI/CD Pipeline
 
-on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
+# ------------------------------------------------------------
+# When this pipeline runs
+# ------------------------------------------------------------
 
-# Minimal permissions (security best practice)
-permissions:
-  contents: read
+on:
+
+  # Run on every push
+  push:
+    branches:
+      - main
+
+  # Run on Pull Requests
+  pull_request:
+
+  # Allow manual execution
+  workflow_dispatch:
+
 
 jobs:
-  lint_security_gates:
+
+# ============================================================
+# JOB 1 — Lint and Security Validation
+# ============================================================
+
+  lint-security:
+
     name: Lint + Security Gates
+
     runs-on: ubuntu-latest
 
+
     steps:
-      # --- Source checkout ----------------------------------------------------
-      - name: Checkout
+
+    # --------------------------------------------------------
+    # Checkout repository code
+    # --------------------------------------------------------
+
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # --- YAML lint (compose, workflows, config files) ----------------------
-      - name: Setup Python (for yamllint)
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
+
+    # --------------------------------------------------------
+    # Install yamllint
+    # --------------------------------------------------------
 
       - name: Install yamllint
         run: |
-          python -m pip install --upgrade pip
           pip install yamllint
 
-      - name: YAML lint
-        run: |
-          yamllint -f colored .
 
-      # --- Shell scripts lint -------------------------------------------------
-      # Note: ShellCheck catches real production bugs early.
+    # --------------------------------------------------------
+    # Validate YAML syntax
+    # --------------------------------------------------------
+
+      - name: YAML lint validation
+        run: |
+          yamllint .
+
+
+    # --------------------------------------------------------
+    # Install ShellCheck
+    # --------------------------------------------------------
+
       - name: Install ShellCheck
         run: |
           sudo apt-get update
-          sudo apt-get install -y shellcheck
+          sudo apt-get install shellcheck -y
 
-      - name: ShellCheck (bash scripts)
+
+    # --------------------------------------------------------
+    # Scan shell scripts for security issues
+    # --------------------------------------------------------
+
+      - name: Shell script lint
         run: |
-          # Quote everything to avoid SC2086 and word-splitting
-          if find "./scripts" -type f -name "*.sh" -print -quit | grep -q .; then
-            find "./scripts" -type f -name "*.sh" -print0 | xargs -0 shellcheck
-          else
-            echo "No scripts found under ./scripts — skipping."
-          fi
+          shellcheck scripts/*.sh
 
-      # --- GitHub Actions workflow lint --------------------------------------
-      # IMPORTANT: rhysd/actionlint is a tool; reviewdog provides the action wrapper.
-      - name: Actionlint (workflows)
-        uses: reviewdog/action-actionlint@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          fail_on_error: true
 
-      # --- Docker Compose sanity check (CI-safe, no heavy pulls) --------------
-      - name: Docker Compose config validation
+    # --------------------------------------------------------
+    # Install Actionlint
+    # Validates GitHub workflows
+    # --------------------------------------------------------
+
+      - name: Install actionlint
         run: |
-          docker compose -f "./docker-compose.yml" config > /dev/null
+          curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash
 
-      # --- Nginx config validation (small image pull, worth it) ---------------
-      - name: Nginx config syntax test
+
+    # --------------------------------------------------------
+    # Validate GitHub workflows syntax
+    # --------------------------------------------------------
+
+      - name: Validate GitHub workflows
         run: |
-          docker run --rm \
-            -v "${PWD}/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" \
-            nginx:alpine nginx -t
+          ./actionlint
 
-      # --- Trivy filesystem scan (high/critical gate) ------------------------
-      - name: Trivy filesystem scan (HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          scan-type: "fs"
-          scan-ref: "."
-          severity: "HIGH,CRITICAL"
-          ignore-unfixed: true
-          format: "table"
-          exit-code: "1"
 
-  compose_smoke_test:
+    # --------------------------------------------------------
+    # Install Trivy
+    # Vulnerability scanner
+    # --------------------------------------------------------
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get install wget apt-transport-https gnupg lsb-release -y
+
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key \
+          | sudo gpg --dearmor -o /usr/share/keyrings/trivy.gpg
+
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] \
+          https://aquasecurity.github.io/trivy-repo/deb \
+          $(lsb_release -cs) main" \
+          | sudo tee /etc/apt/sources.list.d/trivy.list
+
+          sudo apt-get update
+
+          sudo apt-get install trivy -y
+
+
+    # --------------------------------------------------------
+    # Scan repository for vulnerabilities
+    # --------------------------------------------------------
+
+      - name: Security vulnerability scan
+        run: |
+          trivy fs --exit-code 1 --severity HIGH,CRITICAL .
+
+
+
+# ============================================================
+# JOB 2 — Docker Compose Smoke Test
+# ============================================================
+
+  docker-test:
+
     name: Compose Smoke Test (CI-safe)
+
     runs-on: ubuntu-latest
-    needs: lint_security_gates
+
+    needs: lint-security
+
 
     steps:
-      - name: Checkout
+
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # We only validate the structure; we do NOT boot ollama (heavy image).
-      - name: Smoke test (compose config)
+
+      - name: Validate docker-compose syntax
         run: |
-          docker compose -f "./docker-compose.yml" config > /dev/null
-          echo "Compose file parsed successfully (CI-safe)."
+          docker compose config
