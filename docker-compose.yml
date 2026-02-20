@@ -1,62 +1,49 @@
-version: '3.8'
+version: "3.8"
 
 services:
   ollama:
-    # Pinned version for supply chain security
-    image: ollama/ollama:${OLLAMA_VERSION:-latest}
+    image: ollama/ollama:latest
     container_name: private_llm_engine
     restart: unless-stopped
+
+    # Security: no host ports exposed -> only internal network access.
+    # Nginx is the only ingress point.
     volumes:
-      # Persistent local storage for downloaded LLM weights
       - ollama_data:/root/.ollama
+
     networks:
       - ai_secure_net
+
+    # Optional GPU support (works when NVIDIA runtime is available).
+    # In CI we override this with docker-compose.ci.yml.
     deploy:
       resources:
         reservations:
           devices:
-            # GPU Passthrough for hardware-accelerated inference
             - driver: nvidia
               count: all
               capabilities: [gpu]
-    healthcheck:
-      # Verifies if the internal LLM API is responsive
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   nginx:
     image: nginx:alpine
     container_name: ai_proxy
-    restart: always
+    restart: unless-stopped
+    depends_on:
+      - ollama
+
     ports:
       - "80:80"
-      - "${HTTPS_PORT:-443}:443"
+      - "443:443"
+
     volumes:
-      # Read-only mounts to prevent container breakout tampering
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/certs:/etc/nginx/certs:ro
+
     networks:
       - ai_secure_net
-      - public_proxy_net
-    depends_on:
-      ollama:
-        # Ensures Nginx only starts if the LLM engine is fully operational
-        condition: service_healthy
-    healthcheck:
-      # Edge node health and proxy validation
-      test: ["CMD", "wget", "--spider", "-q", "https://localhost/api/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 networks:
   ai_secure_net:
-    # Crucial security control: Physical network isolation (No egress to the internet)
-    internal: true 
-  public_proxy_net:
-    # Bridge network to allow external client connections to Nginx
     driver: bridge
 
 volumes:
